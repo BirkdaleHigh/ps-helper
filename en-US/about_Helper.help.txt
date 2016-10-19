@@ -1,0 +1,15 @@
+TOPIC
+    about_Helper Overview
+
+SHORT DESCRIPTION
+    Short functions used to aid in commonly occuring tasks.
+
+LONG DESCRIPTION
+    Functions to make common tasks easier or as a reference/shortcut to more unusual tasks we do rarely.
+
+KEYWORDS
+    School, Helpers, Search Mail Server.
+
+SEE ALSO
+    Text-only references for further reading. Hyperlinks cannot work in the Windows PowerShell console.
+    Mr J Bennett
