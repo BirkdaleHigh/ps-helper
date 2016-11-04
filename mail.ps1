@@ -1,7 +1,14 @@
 function Search-MailFrom () {
+    <#
+    .SYNOPSIS
+        Search a mailbox by from address
+    .DESCRIPTION
+        Use a search string with a trailing wildcard to filter the mailbox
+    #>
     Param(
         [string]$Identity
-        , [string]$From
+        , # Cannot start with a wildcard, only end with *
+        [string]$From
         , [datetime]$Start = (Get-date).Date
         , [datetime]$End = $Start.addDays(1).Date
         , [switch]$Delete
@@ -10,9 +17,16 @@ function Search-MailFrom () {
 }
 
 function Search-MailSubject () {
+    <#
+    .SYNOPSIS
+        Search a mailbox by subject
+    .DESCRIPTION
+        Use a search string with a trailing wildcard to filter the mailbox
+    #>
     Param(
         [string]$Identity
-        , [string]$Subject
+        , # Cannot start with a wildcard, only end with *
+        [string]$Subject
         , [datetime]$Start = (Get-date).Date
         , [datetime]$End = $Start.addDays(1).Date
         , [switch]$Delete
