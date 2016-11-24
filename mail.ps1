@@ -12,8 +12,9 @@ function Search-MailFrom () {
         , [datetime]$Start = (Get-date).Date
         , [datetime]$End = $Start.addDays(1).Date
         , [switch]$Delete
+        , [string]$ResultTarget = $env:username
     )
-    Search-Mailbox -identity $Identity -SearchQuery "received:$($Start.toString('yyyy-MM-dd'))..$($End.toString('yyyy-MM-dd')) AND from:`"$from`"" -TargetMailBox $env:username -TargetFolder "Search" -DeleteContent:$Delete
+    Search-Mailbox -identity $Identity -SearchQuery "received:$($Start.toString('yyyy-MM-dd'))..$($End.toString('yyyy-MM-dd')) AND from:`"$from`"" -TargetMailBox $ResultTarget -TargetFolder "Search" -DeleteContent:$Delete
 }
 
 function Search-MailSubject () {
@@ -30,8 +31,9 @@ function Search-MailSubject () {
         , [datetime]$Start = (Get-date).Date
         , [datetime]$End = $Start.addDays(1).Date
         , [switch]$Delete
+        , [string]$ResultTarget = $env:username
     )
-    Search-Mailbox -identity $Identity -SearchQuery "received:$($Start.toString('yyyy-MM-dd'))..$($End.toString('yyyy-MM-dd')) AND subject:`"$Subject`"" -TargetMailBox $env:username -TargetFolder "Search" -DeleteContent:$Delete
+    Search-Mailbox -identity $Identity -SearchQuery "received:$($Start.toString('yyyy-MM-dd'))..$($End.toString('yyyy-MM-dd')) AND subject:`"$Subject`"" -TargetMailBox $ResultTarget -TargetFolder "Search" -DeleteContent:$Delete
 }
 
 function Search-MailDate () {
@@ -56,9 +58,10 @@ function Search-MailDate () {
         , [datetime]$Start = (Get-date).Date
         , [datetime]$End = $Start.addDays(1).Date
         , [switch]$Delete
+        , [string]$ResultTarget = $env:username
     )
     "received:$($Start.toString('yyyy-MM-dd'))..$($End.toString('yyyy-MM-dd'))"
-    Search-Mailbox -identity $Identity -SearchQuery "received:$($Start.toString('yyyy-MM-dd'))..$($End.toString('yyyy-MM-dd'))" -TargetMailBox $env:username -TargetFolder "Search" -DeleteContent:$Delete
+    Search-Mailbox -identity $Identity -SearchQuery "received:$($Start.toString('yyyy-MM-dd'))..$($End.toString('yyyy-MM-dd'))" -TargetMailBox $ResultTarget -TargetFolder "Search" -DeleteContent:$Delete
 }
 
 $script:session
