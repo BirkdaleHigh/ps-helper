@@ -214,3 +214,5 @@ function New-SharedMailbox {
         Get-Mailbox -Identity $DisplayName
     }
 }
+
+Export-ModuleMember -Function "Search-*", "*-MailServer"
