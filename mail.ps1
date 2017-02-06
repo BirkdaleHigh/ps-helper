@@ -105,3 +105,112 @@ function Remove-Mailserver () {
     #>
     Remove-PSSession $script:session
 }
+
+function Convert-DistributionGroupToSharedMailbox {
+    [CmdletBinding()]
+    <#
+    .SYNOPSIS
+        Recrete a group as a shared mailbox
+    .DESCRIPTION
+        A distribution gounp is a kind of address that exchanged cannot trasnform into a different type.
+
+        This cmdlet takes a group, stores the address exchange uses to map the address lookup, removes the group and re-creates it as a shared mailbox. Then re-adds the address mapping.
+    .EXAMPLE
+        PS C:\> Get-DistributionGroup Finance | Convert-DistributionGroupToSharedMailbox
+    .INPUTS
+        Microsoft.Exchange.Data.Directory.Management.DistributionGroup
+    .OUTPUTS
+        Microsoft.Exchange.Data.Directory.Management.Mailbox
+    .NOTES
+        Order of operations.
+        todo: test for exsiting distrubtion group
+        todo: Check group membership to re-apply permissions on the mailbox
+        Save LegacyExchangeDN attribute for outlook address book mappings
+        Remove existing distribution group
+        Create new shared mailbox in correct DN
+        Add X500 of LegacyExchangeDN of distrubution group that was replaced
+    #>
+    Param(
+        # Pipe Get-DistributionGroup to me.
+        [Parameter(Mandatory)]
+        [Microsoft.Exchange.Data.Directory.Management.DistributionGroup]
+        $Group
+    )
+    Begin{
+        Throw "Never tested. Not even once. Validate for yourself."
+    }
+    Process{
+        $name = $Group.Name
+        $Mapping = $Group.LegacyExchangeDN
+        Remove-DistributionGroup -Identity $Name
+        New-SharedMailbox -DisplayName $Name -Alias $Name | Set-Mailbox -EmailAddresses "X500:$Mapping"
+    }
+}
+function New-SharedMailbox {
+    [CmdletBinding()]
+    <#
+    .SYNOPSIS
+        Create a Shared Mailbox with a default configuration
+    .DESCRIPTION
+
+    .EXAMPLE
+        PS C:\> <example usage>
+        Explanation of what the example does
+    .OUTPUTS
+        Microsoft.Exchange.Data.Directory.Management.Mailbox
+    .NOTES
+        Order of operations.
+        todo: test for exsiting distrubtion group
+        remove existing distribution group
+        new shared mailbox in correct DN
+        add X500 of legacyEchangeDN of distrubution group that was replaced for <reason>
+
+    #>
+    Param(
+        #Will show as the name for the contact and mailbox
+        [string]
+        $DisplayName
+
+        , #Emaill address excluding @example.com
+        [string]
+        $Alias
+
+        , # Users that initially use the mailbox
+        [string[]]
+        $Users
+
+        ,# Org unit path for shared mailboxes
+        [string]
+        $OrgUnit = "bhs.internal/BHS/Mail Users"
+
+        , # mailbox database storage location
+        [string]
+        $Database = "BHS Staff Mailbox Database"
+
+        , # Send mail as the email account itself as opposed to "<user> On behald of <account>"
+        [switch]
+        $SendAs
+    )
+    Begin{
+        Throw "Never tested. Not even once. Validate for yourself."
+    }
+    Process{
+        New-MailBox -Identity $DisplayName -Alias $alias -orgonizationUnit $OrgUnit -Database $Database -UserPrincipalName "$Alias@bhs.internal" -Shared
+        # By default sent items will only show in the senders account. This forces them into the shared sent items folder.
+        Set-MailboxSentItemsConfiguration -Identity $DisplayName -SendAsItemsCopiedTo 'SenderAndFrom' -SendOnBehalfOfItemsCopiedTo 'SenderAndFrom'
+        $users | ForEach-Object {
+            # Mailbox permissions allow the user to perform actions
+            Add-MailBoxPermission $DisplayName -AccessRights FullAccess -User $PSItem
+            # AD permissions allow the users account (outlook) to find the mailbox
+            Add-ADPermission $DisplayName -ExtendedRights "Receive-As" -User $PSItem
+            if($SendAs){
+                Add-ADPermission $DisplayName -ExtendedRights "Send-As" -User $PSItem
+            }
+        }
+        # SendAs permissions with supersede this "On behalf"
+        Set-Mailbox -Identity $DisplayName -GrantSendOnBehalfTo $users
+    }
+    End{
+        Get-Mailbox -Identity $DisplayName
+    }
+}
