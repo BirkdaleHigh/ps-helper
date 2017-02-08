@@ -1,4 +1,4 @@
-function Search-MailFrom () {
+function Search-MailFrom {
     <#
     .SYNOPSIS
         Search a mailbox by from address
@@ -17,7 +17,7 @@ function Search-MailFrom () {
     Search-Mailbox -identity $Identity -SearchQuery "received:$($Start.toString('yyyy-MM-dd'))..$($End.toString('yyyy-MM-dd')) AND from:`"$from`"" -TargetMailBox $ResultTarget -TargetFolder "Search" -DeleteContent:$Delete
 }
 
-function Search-MailSubject () {
+function Search-MailSubject {
     <#
     .SYNOPSIS
         Search a mailbox by subject
@@ -36,7 +36,7 @@ function Search-MailSubject () {
     Search-Mailbox -identity $Identity -SearchQuery "received:$($Start.toString('yyyy-MM-dd'))..$($End.toString('yyyy-MM-dd')) AND subject:`"$Subject`"" -TargetMailBox $ResultTarget -TargetFolder "Search" -DeleteContent:$Delete
 }
 
-function Search-MailDate () {
+function Search-MailDate {
     <#
     .SYNOPSIS
         Search a users mailbox by day
@@ -65,7 +65,7 @@ function Search-MailDate () {
 }
 
 $script:session
-function Import-MailServer () {
+function Import-MailServer {
     <#
     .SYNOPSIS
         Create the remote connection to the mail server as yourself.
@@ -89,14 +89,14 @@ function Import-MailServer () {
     Write-Warning "Use 'Remove-Mailserver' to close the connection for other users to get on."
 
 }
-function Get-MailServer (){
+function Get-MailServer {
     <#
     .SYNOPSIS
         Get the mailserver session
     #>
     return $script:session
 }
-function Remove-Mailserver () {
+function Remove-Mailserver {
     <#
     .SYNOPSIS
         Removes the imported remote connection to the mail server..
