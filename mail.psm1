@@ -106,6 +106,47 @@ function Remove-Mailserver () {
     Remove-PSSession $script:session
 }
 
+function Get-RecentFailedMessage {
+    <#
+    .SYNOPSIS
+        Show failed messages sent to the exchange server in the last hour
+    .DESCRIPTION
+        Filter the message tracking log for failed messages not caught by Sophos i.e PmE12Transport.
+
+        This filtering should be checked regularly as messages failing here will not show up anywhere else.
+    .EXAMPLE
+        Get-RecentFailedMessage -View
+
+        Timestamp           EventId Source Sender            Recipients          MessageSubject
+        ---------           ------- ------ ------            ----------          --------------
+        07/02/2017 11:17:42 FAIL    SMTP   Sent@example.com  {demo@example.com}  Re: Example
+    .EXAMPLE
+        Get-RecentFailedMessage | select source,recipientstatus,sender
+
+        Source RecipientStatus                           Sender           ClientIP
+        ------ ---------------                           ------           ---------
+        SMTP   {550 5.7.1 Sender ID (PRA) Not Permitted} sent@example.com 127.0.0.1
+    .NOTES
+        550 5.7.1 Sender ID (PRA) Not Permitted = Incorrect SPF record from domain and clientIP
+        To fix this you need to exclude the domain by appending to the SenderIdConfig BypassedSenderDomains list
+        Set-SenderIdConfig -BypassedSenderDomains ( (Get-SenderIdConfig).BypassedSenderDomains += "example.com" )
+        Polite message the sending domain technical support their DNS is configured incorrectly.
+    #>
+    Param(
+        # Friendly view that cannot be consumed
+        [switch]
+        $View
+    )
+    Process{
+        $result = Get-MessageTrackingLog -Start (get-date).addMinutes(-60) | Where-Object {($_.eventid -eq 'fail') -and ($_.sourceContext -ne 'PmE12Transport')}
+        if($view){
+            Write-Output $result | format-table -AutoSize -property timestamp,source,sender,recipients,messagesubject
+        } else {
+            Write-Output $result
+        }
+    }
+}
+
 function Convert-DistributionGroupToSharedMailbox {
     [CmdletBinding()]
     <#
@@ -215,4 +256,4 @@ function New-SharedMailbox {
     }
 }
 
-Export-ModuleMember -Function "Search-*", "*-MailServer"
+Export-ModuleMember -Function "Get-*", "Search-*", "*-MailServer"
