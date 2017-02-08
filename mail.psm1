@@ -93,6 +93,8 @@ function Get-MailServer {
     <#
     .SYNOPSIS
         Get the mailserver session
+    .EXAMPLE
+        Import-Mailserver; Import-PSSession (Get-MailServer)
     #>
     return $script:session
 }
@@ -222,7 +224,7 @@ function New-SharedMailbox {
 
         ,# Org unit path for shared mailboxes
         [string]
-        $OrgUnit = "bhs.internal/BHS/Mail Users"
+        $OrganizationalUnit = "bhs.internal/BHS/Mail Users"
 
         , # mailbox database storage location
         [string]
@@ -236,19 +238,19 @@ function New-SharedMailbox {
         Throw "Never tested. Not even once. Validate for yourself."
     }
     Process{
-        New-MailBox -Identity $DisplayName -Alias $alias -orgonizationUnit $OrgUnit -Database $Database -UserPrincipalName "$Alias@bhs.internal" -Shared
+        New-MailBox -Identity $DisplayName -Alias $alias -OrganizationalUnit $OrgUnit -Database $Database -UserPrincipalName "$Alias@bhs.internal" -Shared
         # By default sent items will only show in the senders account. This forces them into the shared sent items folder.
         Set-MailboxSentItemsConfiguration -Identity $DisplayName -SendAsItemsCopiedTo 'SenderAndFrom' -SendOnBehalfOfItemsCopiedTo 'SenderAndFrom'
         $users | ForEach-Object {
             # Mailbox permissions allow the user to perform actions
-            Add-MailBoxPermission $DisplayName -AccessRights FullAccess -User $PSItem
+            Add-MailBoxPermission $DisplayName -AccessRights FullAccess -InheritanceType All -User $PSItem
             # AD permissions allow the users account (outlook) to find the mailbox
             Add-ADPermission $DisplayName -ExtendedRights "Receive-As" -User $PSItem
             if($SendAs){
                 Add-ADPermission $DisplayName -ExtendedRights "Send-As" -User $PSItem
             }
         }
-        # SendAs permissions with supersede this "On behalf"
+        # SendAs permissions will supersede this "On behalf" setting.
         Set-Mailbox -Identity $DisplayName -GrantSendOnBehalfTo $users
     }
     End{
