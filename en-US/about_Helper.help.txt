@@ -2,14 +2,18 @@ TOPIC
     about_Helper Overview
 
 SHORT DESCRIPTION
-    Short functions used to aid in commonly occuring tasks.
+    Short functions used to aid in commonly occurring tasks.
 
 LONG DESCRIPTION
-    Functions to make common tasks easier or as a reference/shortcut to more unusual tasks we do rarely.
+    Functions to make common tasks easier or as a reference/shortcut to more unusual tasks done rarely.
 
 KEYWORDS
-    School, Helpers, Search Mail Server.
+    School, Helpers, Search Mail Server, file permission, monitor hardware
 
 SEE ALSO
-    Text-only references for further reading. Hyperlinks cannot work in the Windows PowerShell console.
-    Mr J Bennett
+    "get-command -module helper" will show you the commands from this module
+    "get-help <command name>" will print the help of a command you are interested in.
+    "get-help <command name> -examples" will display how you can use a command
+    "get-help <command name> -full" you will find everything there is to know.
+
+    Authors: Mr J Bennett
