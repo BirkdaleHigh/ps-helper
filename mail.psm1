@@ -1,9 +1,9 @@
 function Search-MailFrom {
     <#
     .SYNOPSIS
-        Search a mailbox by from address
+        Search a mailbox by "from address"
     .DESCRIPTION
-        Use a search string with a trailing wildcard to filter the mailbox
+        Use a search string with a trailing wildcard(*) to filter the mailbox
     #>
     Param(
         [string]$Identity
@@ -22,7 +22,7 @@ function Search-MailSubject {
     .SYNOPSIS
         Search a mailbox by subject
     .DESCRIPTION
-        Use a search string with a trailing wildcard to filter the mailbox
+        Use a search string with a trailing wildcard(*) to filter the mailbox
     #>
     Param(
         [string]$Identity
@@ -41,15 +41,15 @@ function Search-MailDate {
     .SYNOPSIS
         Search a users mailbox by day
     .EXAMPLE
-        Search-MailDate -Identity sdolan
+        Search-MailDate -Identity <searchTarget>
 
-        RunspaceId       : 90038754-0fdd-4524-ad84-7c11cacfb8a8
-        Identity         : BHS.INTERNAL/BHS/Users/System Administrators/Mr S Dolan
-        DisplayName      : Mr S Dolan
-        TargetMailbox    : BHS.INTERNAL/BHS/Users/System Administrators/Mr J. Bennett
+        RunspaceId       : xxxxxxxx-0000-1111-aaaa-1234abcd5678
+        Identity         : Domain/Name/Users/Group/searchTarget
+        DisplayName      : searchTarget
+        TargetMailbox    : Domain/Name/Users/Group/resultTarget
         TargetPSTFile    :
         Success          : True
-        TargetFolder     : \Search\Mr S Dolan-19/10/2016 15:03:48
+        TargetFolder     : \Search\searchTarget-19/10/2016 15:03:48
         ResultItemsCount : 29
         ResultItemsSize  : 18.83 MB (19,742,786 bytes)
     #>
@@ -70,21 +70,28 @@ function Import-MailServer {
     .SYNOPSIS
         Create the remote connection to the mail server as yourself.
     .DESCRIPTION
-        Corectly enters a remote session to the exchange server and loads the requisite cmdlets.
+        Correctly open remote session to the exchange server which loads the exchange cmdlets.
 
         When you are finished remove the connection with Remove-MailServer
     .EXAMPLE
         Import-MailServer
-        WARNING: The names of some imported commands from the module 'tmp_sy1nupvn.hlk' include unapproved verbs that might
+        WARNING: The names of some imported commands from the module 'tmp_connection.hlk' include unapproved verbs that might
         make them less discoverable. To find the commands with unapproved verbs, run the Import-Module command again with the
         Verbose parameter. For a list of approved verbs, type Get-Verb.
 
         ModuleType Version    Name                                ExportedCommands
         ---------- -------    ----                                ----------------
-        Script     1.0        tmp_sy1nupvn.hlk                    {Add-ADPermission, Add-AvailabilityAddressSpace, Add-Conte...
+        Script     1.0        tmp_connection.hlk                    {Add-ADPermission, Add-AvailabilityAddressSpace, Add-Conte...
         WARNING: Use 'Remove-Mailserver' to close the connection for other users to get on.
     #>
-    $script:session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri http://bhs-mail01.bhs.internal/PowerShell/ -Authentication Kerberos
+    Param(
+        [string]
+        $ComputerName = 'mailgate.birkdalehigh.co.uk'
+    )
+    $test = test-connection $ComputerName -count 1
+    $host = [System.Net.Dns]::GetHostbyAddress($test.ProtocolAddress).HostName
+
+    $script:session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri "http://$host/PowerShell/" -Authentication Kerberos
     Import-PSSession $script:session
     Write-Warning "Use 'Remove-Mailserver' to close the connection for other users to get on."
 
@@ -93,15 +100,17 @@ function Get-MailServer {
     <#
     .SYNOPSIS
         Get the mailserver session
+    .DESCRIPTION
+        Use the existing session to import into to higher powershell scope to get access to all the exchange cmdlets
     .EXAMPLE
         Import-Mailserver; Import-PSSession (Get-MailServer)
     #>
     return $script:session
 }
-function Remove-Mailserver {
+function Remove-MailServer {
     <#
     .SYNOPSIS
-        Removes the imported remote connection to the mail server..
+        Removes the imported remote connection to the mail server.
     .EXAMPLE
         Remove-MailServer
     #>
@@ -155,7 +164,7 @@ function Convert-DistributionGroupToSharedMailbox {
     .SYNOPSIS
         Recrete a group as a shared mailbox
     .DESCRIPTION
-        A distribution gounp is a kind of address that exchanged cannot trasnform into a different type.
+        A distribution gounp is a kind of address that exchanged cannot transform into a different type.
 
         This cmdlet takes a group, stores the address exchange uses to map the address lookup, removes the group and re-creates it as a shared mailbox. Then re-adds the address mapping.
     .EXAMPLE
@@ -166,7 +175,7 @@ function Convert-DistributionGroupToSharedMailbox {
         Microsoft.Exchange.Data.Directory.Management.Mailbox
     .NOTES
         Order of operations.
-        todo: test for exsiting distrubtion group
+        todo: test for exsiting distribution group
         todo: Check group membership to re-apply permissions on the mailbox
         Save LegacyExchangeDN attribute for outlook address book mappings
         Remove existing distribution group
