@@ -250,9 +250,10 @@ function New-SharedMailbox {
         [string]
         $Database = "BHS Staff Mailbox Database"
 
-        , # Send mail as the email account itself as opposed to "<user> On behald of <account>"
-        [switch]
-        $SendAs
+        , # Users will get permission to send "<user> On behald of <account>", directly from <account> or not at all.
+        [ValidateSet('None', 'Behalf', 'From')]
+        [string]
+        $Send = 'Behalf'
     )
     Begin{
     }
@@ -265,12 +266,16 @@ function New-SharedMailbox {
             Add-MailBoxPermission $Name -AccessRights FullAccess -InheritanceType All -User $PSItem
             # AD permissions allow the users account (outlook) to find the mailbox
             Add-ADPermission $Name -ExtendedRights "Receive-As" -User $PSItem
-            if($SendAs){
+            if($Send -eq 'From'){
                 Add-ADPermission $Name -ExtendedRights "Send-As" -User $PSItem
             }
         }
-        # SendAs permissions will supersede this "On behalf" setting.
-        Set-Mailbox -Identity $Name -GrantSendOnBehalfTo $users
+        if($Send -eq 'Behalf'){
+            # Send 'From' permissions will supersede this "On behalf" setting.
+            # -GrantSendOnBehalfTo only replaces the list, you must append your own users list first.
+            Set-Mailbox -Identity $Name -GrantSendOnBehalfTo $users
+            Write-Warning "The permission for users to send 'From' will supersede this permission, check their AD-Permissions for 'Send-As'"
+        }
     }
     End{
         Get-Mailbox -Identity $Name
