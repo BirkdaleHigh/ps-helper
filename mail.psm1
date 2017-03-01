@@ -206,24 +206,35 @@ function New-SharedMailbox {
     .DESCRIPTION
 
     .EXAMPLE
-        PS C:\> <example usage>
-        Explanation of what the example does
+        PS C:\> New-SharedMailbox -Name "AddressTitle" -DisplayName "Full Address Title" -Alias "address" -Users "personA", "PersonB"
+        Name           Alias
+        ----           -----
+        AddressTitle   address
     .OUTPUTS
         Microsoft.Exchange.Data.Directory.Management.Mailbox
     .NOTES
-        Order of operations.
-        todo: test for exsiting distrubtion group
-        remove existing distribution group
+        Order of operations;
         new shared mailbox in correct DN
-        add X500 of legacyEchangeDN of distrubution group that was replaced for <reason>
-
+        Assign mailbox send parameters
+        Add persmissions for each user
+            Check to add full send-from persmission from switch
+        Add send on behalf permission
+        Return mailbox
     #>
     Param(
-        #Will show as the name for the contact and mailbox
+        # Will show as the name for the contact and mailbox
+        [Parameter(Mandatory)]
+        [string]
+        $Name
+
+        , # The name that appears in the Exchange Management Console under Recipient Configuration
         [string]
         $DisplayName
 
         , #Emaill address excluding @example.com
+        [Parameter(Mandatory)]
+        [alias('EmailAddress')]
+        [ValidatePattern('.*[^@].*')]
         [string]
         $Alias
 
@@ -244,27 +255,26 @@ function New-SharedMailbox {
         $SendAs
     )
     Begin{
-        Throw "Never tested. Not even once. Validate for yourself."
     }
     Process{
-        New-MailBox -Identity $DisplayName -Alias $alias -OrganizationalUnit $OrgUnit -Database $Database -UserPrincipalName "$Alias@bhs.internal" -Shared
+        New-MailBox -Name $Name -DisplayName $DisplayName -Alias $alias -OrganizationalUnit $OrgUnit -Database $Database -UserPrincipalName "$Alias@bhs.internal" -Shared
         # By default sent items will only show in the senders account. This forces them into the shared sent items folder.
-        Set-MailboxSentItemsConfiguration -Identity $DisplayName -SendAsItemsCopiedTo 'SenderAndFrom' -SendOnBehalfOfItemsCopiedTo 'SenderAndFrom'
+        Set-MailboxSentItemsConfiguration -Identity $Name -SendAsItemsCopiedTo 'SenderAndFrom' -SendOnBehalfOfItemsCopiedTo 'SenderAndFrom'
         $users | ForEach-Object {
             # Mailbox permissions allow the user to perform actions
-            Add-MailBoxPermission $DisplayName -AccessRights FullAccess -InheritanceType All -User $PSItem
+            Add-MailBoxPermission $Name -AccessRights FullAccess -InheritanceType All -User $PSItem
             # AD permissions allow the users account (outlook) to find the mailbox
-            Add-ADPermission $DisplayName -ExtendedRights "Receive-As" -User $PSItem
+            Add-ADPermission $Name -ExtendedRights "Receive-As" -User $PSItem
             if($SendAs){
-                Add-ADPermission $DisplayName -ExtendedRights "Send-As" -User $PSItem
+                Add-ADPermission $Name -ExtendedRights "Send-As" -User $PSItem
             }
         }
         # SendAs permissions will supersede this "On behalf" setting.
-        Set-Mailbox -Identity $DisplayName -GrantSendOnBehalfTo $users
+        Set-Mailbox -Identity $Name -GrantSendOnBehalfTo $users
     }
     End{
-        Get-Mailbox -Identity $DisplayName
+        Get-Mailbox -Identity $Name
     }
 }
 
-Export-ModuleMember -Function "Get-*", "Search-*", "*-MailServer"
+Export-ModuleMember -Function "Get-*", "Search-*", "New-*", "*-MailServer"
