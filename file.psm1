@@ -35,7 +35,7 @@ function Enable-StudentAccess {
     .SYNOPSIS
         Remove "Deny" permission added by "Enable-StudentAccess"
     .DESCRIPTION
-        Remove the NTFS Deny ACL for a given item for students access.
+        Remove the NTFS Deny ACL for a given item for students access. Users might still not have file permission
     .EXAMPLE
         PS C:\> \\<server\<share>\<Path> | Enable-StudentAccess | Convertto-html | Out-File "Report.html"
         Generate a report that lists the item students have been blocked from using.
@@ -67,12 +67,12 @@ function Add-StudentAccess {
     [CmdletBinding()]
     <#
     .SYNOPSIS
-        Add "Allow" permission added by "Enable-StudentAccess"
+        Add "Allow" permission to target path.
     .DESCRIPTION
-        Add the NTFS Allow ACL for a given item for students access.
+        Add the NTFS Allow ACL for a given item for students access. Any deny rule will supercede this.
     .EXAMPLE
-        PS C:\> \\<server\<share>\<Path> | Enable-StudentAccess | Convertto-html | Out-File "Report.html"
-        Generate a report that lists the items students have been blocked from using.
+        PS C:\> \\<server\<share>\<Path> | Add-StudentAccess | Convertto-html | Out-File "Report.html"
+        Generate a report that lists the items students have been allowed to aceess.
     #>
     Param(
         [Parameter(ValueFromPipeline,ValueFromPipelineByPropertyName)]
@@ -105,6 +105,37 @@ function Add-StudentAccess {
             try { $psitem | Set-acl }
             catch {
                 Throw "Failed to add permission: $($psitem.path)"
+            }
+            Get-Item $psitem.Path | Write-Output
+        }
+    }
+}
+
+function Remove-StudentAccess {
+    [CmdletBinding()]
+    <#
+    .SYNOPSIS
+        Remove "Allow" permission added by "Add-StudentAccess"
+    .DESCRIPTION
+        Remove the NTFS Allow ACL for a given item for students access.
+    .EXAMPLE
+        PS C:\> \\<server\<share>\<Path> | Remove-StudentAccess | Convertto-html | Out-File "Report.html"
+        Generate a report that lists the items students have been blocked from using.
+    #>
+    Param(
+        [Parameter(ValueFromPipeline,ValueFromPipelineByPropertyName)]
+        [String[]]
+        $Path
+    )
+    Begin {
+    }
+    Process {
+        $Path | Get-Acl | foreach-object {
+            $Rule = $psitem.Access | Where-Object { ($_.IdentityReference -eq 'BHS\AllStudents') -and ($_.AccessControlType -eq  'Allow')}
+            $psitem.RemoveAccessRule($Rule) > $null
+            try { $psitem | Set-acl }
+            catch {
+                Throw "Failed to remove permission: $($psitem.path)"
             }
             Get-Item $psitem.Path | Write-Output
         }
