@@ -242,8 +242,9 @@ function New-SharedMailbox {
         [string[]]
         $Users
 
-        ,# Org unit path for shared mailboxes
+        , # Path to shared mailbox user account, not an AD OU Path
         [string]
+        [ValidatePattern('[^=;]')]
         $OrganizationalUnit = "bhs.internal/BHS/Mail Users"
 
         , # mailbox database storage location
@@ -258,7 +259,7 @@ function New-SharedMailbox {
     Begin{
     }
     Process{
-        New-MailBox -Name $Name -DisplayName $DisplayName -Alias $alias -OrganizationalUnit $OrgUnit -Database $Database -UserPrincipalName "$Alias@bhs.internal" -Shared
+        New-MailBox -Name $Name -DisplayName $DisplayName -Alias $alias -OrganizationalUnit $OrganizationalUnit -Database $Database -UserPrincipalName "$Alias@bhs.internal" -Shared
         # By default sent items will only show in the senders account. This forces them into the shared sent items folder.
         Set-MailboxSentItemsConfiguration -Identity $Name -SendAsItemsCopiedTo 'SenderAndFrom' -SendOnBehalfOfItemsCopiedTo 'SenderAndFrom'
         $users | ForEach-Object {
