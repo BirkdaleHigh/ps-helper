@@ -65,6 +65,7 @@ function Search-MailDate {
 }
 
 $script:session
+[bool]$script:import
 function Import-MailServer {
     <#
     .SYNOPSIS
@@ -86,15 +87,27 @@ function Import-MailServer {
     #>
     Param(
         [string]
-        $ComputerName = 'mailgate.birkdalehigh.co.uk'
+        $ComputerName = 'mailgate.birkdalehigh.co.uk',
+
+        [PSCredential]
+        $Credential,
+
+        [ValidateSet('Script','Global')]
+        $Scope = 'Global'
     )
-    $test = test-connection $ComputerName -count 1
+    $test = Test-Connection $ComputerName -count 1 -ErrorAction Stop
     $host = [System.Net.Dns]::GetHostbyAddress($test.ProtocolAddress).HostName
 
-    $script:session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri "http://$host/PowerShell/" -Authentication Kerberos
-    Import-PSSession $script:session
+    $script:session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri "http://$host/PowerShell/" -Authentication Kerberos -Credential:$Credential
+    if($Scope -eq 'Global'){
+        Import-module (Import-PSSession $script:session) -Global
+    } else {
+        if(-not $script:import){
+            Import-PSSession $script:session
+            $script:import = $true
+        }
+    }
     Write-Warning "Use 'Remove-Mailserver' to close the connection for other users to get on."
-
 }
 function Get-MailServer {
     <#
@@ -105,7 +118,12 @@ function Get-MailServer {
     .EXAMPLE
         Import-Mailserver; Import-PSSession (Get-MailServer)
     #>
-    return $script:session
+    if ($script:session){
+        return $script:session
+    }
+    else{
+        Write-Error 'Cannot find open session, use Import-Mailserver'
+    }
 }
 function Remove-MailServer {
     <#
