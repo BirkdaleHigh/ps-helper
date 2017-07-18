@@ -220,7 +220,6 @@ function Convert-DistributionGroupToSharedMailbox {
     }
 }
 function New-SharedMailbox {
-    [CmdletBinding()]
     <#
     .SYNOPSIS
         Create a Shared Mailbox with a default configuration
@@ -231,6 +230,12 @@ function New-SharedMailbox {
         Name           Alias
         ----           -----
         AddressTitle   address
+
+    .EXAMPLE
+        PS C:\> New-SharedMailbox -Name reports -DisplayName Reports -Alias reports -Users OfficeAdmin,Receptionist
+        Name       Alias      ServerName    ProhibitSendQuota
+        ----       -----      ----------    -----------------
+        reports    reports    exchange01    unlimited
     .OUTPUTS
         Microsoft.Exchange.Data.Directory.Management.Mailbox
     .NOTES
@@ -241,7 +246,13 @@ function New-SharedMailbox {
             Check to add full send-from persmission from switch
         Add send on behalf permission
         Return mailbox
+
+        Permissions:
+        There's levels have been discovered in testing and not researched. Enterprise Administrators would be the top level that can do anything to exchange.
+        The ability to Set-MailboxSentItemsConfiguration requires "Enterprise Administrators" group membership with the credentials used for import-mailserver.
+        Creating the mailbox and assigning permissions requires only "Organization Management" membership.
     #>
+    [CmdletBinding()]
     Param(
         # Will show as the name for the contact and mailbox
         [Parameter(Mandatory)]
@@ -252,7 +263,7 @@ function New-SharedMailbox {
         [string]
         $DisplayName
 
-        , #Emaill address excluding @example.com
+        , # Emaill address excluding @example.com
         [Parameter(Mandatory)]
         [alias('EmailAddress')]
         [ValidatePattern('.*[^@].*')]
