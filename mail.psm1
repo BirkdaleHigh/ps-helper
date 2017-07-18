@@ -292,26 +292,27 @@ function New-SharedMailbox {
     }
     Process{
         New-MailBox -Name $Name -DisplayName $DisplayName -Alias $alias -OrganizationalUnit $OrganizationalUnit -Database $Database -UserPrincipalName "$Alias@bhs.internal" -Shared
+        $mailbox = Get-Mailbox -Identity $Name
         # By default sent items will only show in the senders account. This forces them into the shared sent items folder.
-        Set-MailboxSentItemsConfiguration -Identity $Name -SendAsItemsCopiedTo 'SenderAndFrom' -SendOnBehalfOfItemsCopiedTo 'SenderAndFrom'
+        Set-MailboxSentItemsConfiguration -Identity $mailbox.Identity -SendAsItemsCopiedTo 'SenderAndFrom' -SendOnBehalfOfItemsCopiedTo 'SenderAndFrom'
         $users | ForEach-Object {
             # Mailbox permissions allow the user to perform actions
-            Add-MailBoxPermission $Name -AccessRights FullAccess -InheritanceType All -User $PSItem
-            # AD permissions allow the users account (outlook) to find the mailbox
-            Add-ADPermission $Name -ExtendedRights "Receive-As" -User $PSItem
+            Add-MailBoxPermission $mailbox.Identity -AccessRights FullAccess -InheritanceType All -User $PSItem
+            # AD permissions allow the users account#new (outlook) to find the mailbox
+            Add-ADPermission $mailbox.Identity -ExtendedRights "Receive-As" -User $PSItem
             if($Send -eq 'From'){
-                Add-ADPermission $Name -ExtendedRights "Send-As" -User $PSItem
+                Add-ADPermission $mailbox.Identity -ExtendedRights "Send-As" -User $PSItem
             }
         }
         if($Send -eq 'Behalf'){
             # Send 'From' permissions will supersede this "On behalf" setting.
             # -GrantSendOnBehalfTo only replaces the list, you must append your own users list first.
-            Set-Mailbox -Identity $Name -GrantSendOnBehalfTo $users
+            Set-Mailbox -Identity $mailbox.Identity -GrantSendOnBehalfTo $users > $null
             Write-Warning "The permission for users to send 'From' will supersede this permission, check their AD-Permissions for 'Send-As'"
         }
     }
     End{
-        Get-Mailbox -Identity $Name
+        Write-Output $mailbox
     }
 }
 
