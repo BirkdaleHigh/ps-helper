@@ -162,13 +162,16 @@ function Get-RecentFailedMessage {
         Polite message the sending domain technical support their DNS is configured incorrectly.
     #>
     Param(
-        # Friendly view that cannot be consumed
+        # Past amound of hours to get results
+        $PastHours = 1
+
+        , # Friendly view that cannot be consumed down the pipe
         [switch]
-        $View
+        $FormatView
     )
     Process{
-        $result = Get-MessageTrackingLog -Start (get-date).addMinutes(-60) | Where-Object {($_.eventid -eq 'fail') -and ($_.sourceContext -ne 'PmE12Transport')}
-        if($view){
+        $result = Get-MessageTrackingLog -Start (get-date).addHours(-$PastHours) -EventId "FAIL" | Where-Object sourceContext -ne 'PmE12Transport'
+        if($FormatView){
             Write-Output $result | format-table -AutoSize -property timestamp,source,sender,recipients,messagesubject
         } else {
             Write-Output $result
