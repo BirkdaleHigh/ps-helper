@@ -5,7 +5,11 @@ For tasks that are done often or rarely it can be useful to wrap up some quirky 
 
 1. Download the folder and place it in your own module folder. `$env:PSModulePath.split(';')` will show you these locations.
 1. Ensure that folder is named `Helper`
-1. When needed, import the module with `Import-module helper`
+
+Because the module is in your known path, powershell can find the commands by name to automatically import as you type them.
+
+## Manual use
+1. When needed, import the module with `Import-module <PathToFolder>\helper.psd1`
 
 # How To Use
 
