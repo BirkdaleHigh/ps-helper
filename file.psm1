@@ -35,7 +35,8 @@ function Enable-StudentAccess {
     .SYNOPSIS
         Remove "Deny" permission added by "Enable-StudentAccess"
     .DESCRIPTION
-        Remove the NTFS Deny ACL for a given item for students access. Users might still not have file permission
+        Remove the NTFS Deny ACL for a given item for students access.
+        Does not test that users get access permission. See Add-StudentAccess
     .EXAMPLE
         PS C:\> \\<server\<share>\<Path> | Enable-StudentAccess | Convertto-html | Out-File "Report.html"
         Generate a report that lists the item students have been blocked from using.
@@ -64,7 +65,6 @@ function Enable-StudentAccess {
 }
 
 function Add-StudentAccess {
-    [CmdletBinding()]
     <#
     .SYNOPSIS
         Add "Allow" permission to target path.
@@ -74,6 +74,7 @@ function Add-StudentAccess {
         PS C:\> \\<server\<share>\<Path> | Add-StudentAccess | Convertto-html | Out-File "Report.html"
         Generate a report that lists the items students have been allowed to aceess.
     #>
+    [CmdletBinding()]
     Param(
         [Parameter(ValueFromPipeline,ValueFromPipelineByPropertyName)]
         [String[]]
