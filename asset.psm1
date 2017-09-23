@@ -29,23 +29,14 @@ function Get-MonitorInformation {
                 expression = { $psitem.__SERVER }
             },
             @{  name = 'Name'
-                expression = {convertUint16ToString $psitem.ManufacturerName}
+                expression = { [System.Text.Encoding]::ASCII.GetString($psitem.ManufacturerName) }
             },
             @{  name = 'Serial'
-                expression = {convertUint16ToString $psitem.SerialNumberID}
+                expression = { [System.Text.Encoding]::ASCII.GetString($psitem.SerialNumberID) }
             },
             YearOfManufacture
 
     }
-}
-
-function convertUint16ToString($int){
-    $str = $int | Where-Object {
-        $_ -notmatch 0
-    } | ForEach-Object {
-        [char]$_
-    }
-    Write-Output ($str -join "")
 }
 
 Export-ModuleMember -Function "Get-MonitorInformation"
