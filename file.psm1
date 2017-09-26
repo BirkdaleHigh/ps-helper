@@ -127,7 +127,7 @@ function Add-Access {
     )
     Begin {
         switch ($inherit) {
-            'ThisFolder' { $Inherritance = @('ObjectInherit') }
+            'ThisFolder' { $Inherritance = @('None') }
             Default { $Inherritance = @('ContainerInherit', 'ObjectInherit') }
         }
         $FolderRule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $Identity, $Access, $Inherritance, 'None', 'Allow'
@@ -175,7 +175,7 @@ function Remove-Access {
     }
     Process {
         $Path | Get-Acl | foreach-object {
-            $Rule = $psitem.Access | Where-Object { ($_.IdentityReference -eq $Identity) -and ($_.AccessControlType -eq  'Allow')}
+            $Rule = $psitem.Access | Where-Object { ($_.IdentityReference -like "*$Identity") -and ($_.AccessControlType -eq  'Allow')}
             $psitem.RemoveAccessRule($Rule) > $null
             try { $psitem | Set-acl }
             catch {
