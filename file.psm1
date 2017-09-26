@@ -186,6 +186,82 @@ function Remove-Access {
     }
 }
 
+function Show-Access {
+    <#
+    .SYNOPSIS
+        Display the ACL information for given files or folders.
+    .DESCRIPTION
+        Wraps Get-ACL to select the access list while retaining the file path being inspected.
+        Useful for Group-Object inspecting access controls.
+
+        This function is intended for interactive use inspecting a network share, as such it breaks best practice of avoiding the use of format-* commands.
+    .EXAMPLE
+        Show-Access '.\INFO.lnk'
+
+        Path                               IdentityReference            IsInherited AccessControlType            FileSystemRights
+        ----                               -----------------            ----------- -----------------            ----------------
+        \\ORG\Desktop\Start Menu\INFO.lnk  ORG\Office                         False             Allow ReadAndExecute, Synchronize
+        \\ORG\Desktop\Start Menu\INFO.lnk  ORG\Support                         True             Allow                 FullControl
+        \\ORG\Desktop\Start Menu\INFO.lnk  NT AUTHORITY\SYSTEM                 True             Allow                 FullControl
+        \\ORG\Desktop\Start Menu\INFO.lnk  NT AUTHORITY\NETWORK SERVICE        True             Allow                 FullControl
+        \\ORG\Desktop\Start Menu\INFO.lnk  BUILTIN\Administrator               True             Allow                 FullControl
+        \\ORG\Desktop\Start Menu\INFO.lnk  ORG\Domain Admin                    True             Allow                 FullControl
+        \\ORG\Desktop\Start Menu\INFO.lnk  ORG\Share Administrator             True             Allow                 FullControl
+
+        Internal use of Format-Table to ease reading at the console.
+    .EXAMPLE
+        '.\.gitignore','.\asset.psm1' | show-access -NoFormat
+
+        Path              : N:\Documents\helper\.gitignore
+        IdentityReference : ORG\jbennett
+        IsInherited       : True
+        AccessControlType : Allow
+        FileSystemRights  : FullControl
+
+        Path              : N:\Documents\helper\.gitignore
+        IdentityReference : BUILTIN\Administrator
+        IsInherited       : True
+        AccessControlType : Allow
+        FileSystemRights  : FullControl
+
+        Use the NoFormat switch to bypass internal use of Format-Table for piping objects to further functions.
+    .NOTES
+        Should refactor the format switch into a custom native cmdlet format document.
+    #>
+    [CmdletBinding()]
+    Param(
+        [Parameter(Position = 0,Mandatory,ValueFromPipeline,ValueFromPipelineByPropertyName)]
+        [string]
+        $Path
+
+        , # Do not automatically pipe output to Format-Table
+        [switch]$NoFormat = $false
+    )
+    Process {
+        $output = $path |
+            get-acl |
+            Foreach {
+                $item = $psItem | select-Object -Expandproperty Access
+                $item | Add-Member -MemberType NoteProperty -Name Path -Value $psItem.path
+                Write-Output $Item
+            } |
+            select @{
+                    name='Path'
+                    expression = { $_.path.replace('Microsoft.PowerShell.Core\FileSystem::','') }
+                },
+                'IdentityReference',
+                'IsInherited',
+                'AccessControlType',
+                'FileSystemRights'
+
+        if($NoFormat){
+            Write-Output $output
+        } else{
+            $output | Format-Table | Write-Output
+        }
+    }
+}
+
 Register-ArgumentCompleter -CommandName 'Add-Access','Remove-Access','Enable-Access','Disable-Access' -ParameterName 'Identity' -ScriptBlock {
     param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameter)
     [System.Collections.ArrayList]$preset = @(
