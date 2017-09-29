@@ -143,23 +143,85 @@ function Get-RecentFailedMessage {
         Filter the message tracking log for failed messages not caught by Sophos i.e PmE12Transport.
 
         This filtering should be checked regularly as messages failing here will not show up anywhere else.
-    .EXAMPLE
-        Get-RecentFailedMessage -View
 
-        Timestamp           EventId Source Sender            Recipients          MessageSubject
-        ---------           ------- ------ ------            ----------          --------------
-        07/02/2017 11:17:42 FAIL    SMTP   Sent@example.com  {demo@example.com}  Re: Example
+        This cmdlet wraps Get-MessageTrackingLog and requires the exchange cmdlets to be loaded. see `Import-MailServer`
     .EXAMPLE
-        Get-RecentFailedMessage | select source,recipientstatus,sender
+        Get-RecentFailedMessage -FormatView
+        Auto format the output to be easily read. Data not suitable for piping.
 
-        Source RecipientStatus                           Sender           ClientIP
-        ------ ---------------                           ------           ---------
-        SMTP   {550 5.7.1 Sender ID (PRA) Not Permitted} sent@example.com 127.0.0.1
+        Timestamp            Sender            Recipients          MessageSubject
+        ---------            ------            ----------          --------------
+        07/02/2017 11:17:42  Sent@example.com  {demo@example.com}  Re: Example
+    .EXAMPLE
+        Get-RecentFailedMessage -FormatView -IncludeSophos
+        Auto format the output to be easily read. Includes the spam filter that normally has its own console.
+
+        Timestamp            SourceContext    Sender             Recipients              MessageSubject
+        ---------            -------------    ------             ----------              --------------
+        29/09/2017 11:33:40  PmE12Transport   ABC@example.com    {internal@example.com}  Invoice
+        29/09/2017 11:33:50  Sender Id Agent  DEF@example.com    {internal@example.com}  RE: Quick Quest
+
+        Data not suitable for piping.
+    .EXAMPLE
+        Get-RecentFailedMessage | select SourceContext,recipientstatus,sender,ClientIP
+        Make a table of any column headers, do not use a format switch as if cannot be used down the pipeline.
+
+        SourceContext     RecipientStatus                           Sender           ClientIP
+        -------------     ---------------                           ------           ---------
+        Sender Id Agent   {550 5.7.1 Sender ID (PRA) Not Permitted} sent@example.com 127.0.0.1
+    .EXAMPLE
+        Get-RecentFailedMessage -IncludeSophos | measure
+        Check the number of blocked messages in the last hour
+
+        Count    : 231
+    .EXAMPLE
+        Get-RecentFailedMessage -recipients userA@example.com
+        Gets messages that have faild in the last hour for a specific user account.
+
+        EventId  Source   Sender                   Recipients           MessageSubject
+        -------  ------   ------                   ----------           --------------
+        FAIL     SMTP     SpamSender@example.com   {userA@example.com}  Invoice
+    .EXAMPLE
+        Get-RecentFailedMessage | select -first 1  | format-list *
+        Show all the property : values of one message object.
+
+        PSComputerName          : org-server.org.internal
+        RunspaceId              : 4e7dfba1-dd6a-4076-84f2-9ed78b888854
+        PSShowComputerName      : False
+        Timestamp               : 29/09/2017 11:38:05
+        ClientIp                : 222.127.163.110
+        ClientHostname          : ORG-SERVER
+        ServerIp                : 10.201.0.25
+        ServerHostname          :
+        SourceContext           : Sender Id Agent
+        ConnectorId             : ORG-SERVER\Default ORG-SERVER
+        Source                  : SMTP
+        EventId                 : FAIL
+        InternalMessageId       : 0
+        MessageId               : <2a228e10-9af9-83bc-aa16-7b526ca3e832@example.com>
+        Recipients              : {UserD@example.com}
+        RecipientStatus         : {550 5.7.1 Sender ID (PRA) Domain Does Not Exist}
+        TotalBytes              : 0
+        RecipientCount          : 1
+        RelatedRecipientAddress :
+        Reference               :
+        MessageSubject          : Invoice
+        Sender                  : Spammer@example.com
+        ReturnPath              : Spammer@example.com
+        MessageInfo             :
+        MessageLatency          :
+        MessageLatencyType      : None
+        EventData               :3
+
+        Inspect every propery of a message. Usefull to find property names you might want to make a table off.
+        i.e. Get-RecentFailedMessage | select ClientIp,RecipientCount,Sender,ReturnPath
     .NOTES
-        550 5.7.1 Sender ID (PRA) Not Permitted = Incorrect SPF record from domain and clientIP
+        SourceContext as PmE12Transport is the Sophos spam filter engine.
+        SourceContext as Sender Id Agent is an exchange filter agent.
+        RecipientStatus as "550 5.7.1 Sender ID (PRA) Not Permitted" is an Incorrect SPF record for sender domain and clientIP
         To fix this you need to exclude the domain by appending to the SenderIdConfig BypassedSenderDomains list
         Set-SenderIdConfig -BypassedSenderDomains ( (Get-SenderIdConfig).BypassedSenderDomains += "example.com" )
-        Polite message the sending domain technical support their DNS is configured incorrectly.
+        Politely message the sending domain technical support their DNS is configured incorrectly.
     #>
     Param(
         # Past amound of hours to get results
@@ -169,7 +231,7 @@ function Get-RecentFailedMessage {
 
         , # Filter for a specific recipient
         [parameter(position = 1)]
-        [ValidatePattern('^.*@.*$')]
+        [ValidatePattern('(?# User account includes domain suffix)^.*@.*$')]
         [Alias('Identity')]
         [string[]]
         $recipients
