@@ -163,18 +163,38 @@ function Get-RecentFailedMessage {
     #>
     Param(
         # Past amound of hours to get results
+        [parameter(position = 0)]
+        [int]
         $PastHours = 1
+
+        , # Filter for a specific recipient
+        [parameter(position = 1)]
+        [ValidatePattern('^.*@.*$')]
+        [Alias('Identity')]
+        [string[]]
+        $recipients
 
         , # Friendly view that cannot be consumed down the pipe
         [switch]
         $FormatView
+
+        , # Include mail sent to the sophos agent
+        [switch]
+        $IncludeSophos
     )
     Process{
-        $result = Get-MessageTrackingLog -Start (get-date).addHours(-$PastHours) -EventId "FAIL" | Where-Object sourceContext -ne 'PmE12Transport'
-        if($FormatView){
-            Write-Output $result | format-table -AutoSize -property timestamp,source,sender,recipients,messagesubject
-        } else {
+        $result = Get-MessageTrackingLog -Start (get-date).addHours(-$PastHours) -EventId "FAIL" -Recipients:$recipients
+        if( -not $IncludeSophos){
+            $filtered = $result | Where-Object sourceContext -ne 'PmE12Transport'
+        }
+        if($FormatView -and $IncludeSophos){
+            Write-Output $result | format-table -AutoSize -property timestamp,sourceContext,sender,recipients,messagesubject
+        } elseif ($FormatView){
+            Write-Output $filtered | format-table -AutoSize -property timestamp,sender,recipients,messagesubject
+        } elseif ($IncludeSophos){
             Write-Output $result
+        } else {
+            Write-Output $filtered
         }
     }
 }
