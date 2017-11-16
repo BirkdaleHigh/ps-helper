@@ -219,8 +219,8 @@ function Get-RecentFailedMessage {
         SourceContext as PmE12Transport is the Sophos spam filter engine.
         SourceContext as Sender Id Agent is an exchange filter agent.
         RecipientStatus as "550 5.7.1 Sender ID (PRA) Not Permitted" is an Incorrect SPF record for sender domain and clientIP
-        To fix this you need to exclude the domain by appending to the SenderIdConfig BypassedSenderDomains list
-        Set-SenderIdConfig -BypassedSenderDomains ( (Get-SenderIdConfig).BypassedSenderDomains += "example.com" )
+        See Get-, Add-, Remove-BypassedSender
+
         Politely message the sending domain technical support their DNS is configured incorrectly.
     #>
     Param(
@@ -252,11 +252,93 @@ function Get-RecentFailedMessage {
         if($FormatView -and $IncludeSophos){
             Write-Output $result | format-table -AutoSize -property timestamp,sourceContext,sender,recipients,messagesubject
         } elseif ($FormatView){
-            Write-Output $filtered | format-table -AutoSize -property timestamp,sender,recipients,messagesubject
+            Write-Output $filtered | format-table -AutoSize -property timestamp,sender,recipients,messagesubject,RecipientStatus
         } elseif ($IncludeSophos){
             Write-Output $result
         } else {
             Write-Output $filtered
+        }
+    }
+}
+
+function Get-BypassedSender{
+    <#
+    .SYNOPSIS
+        Show the list of domain names that bypass SPF record validation.
+    .EXAMPLE
+        Get-BypassedSender
+        Show the current list of domains that bypass SPF record validation
+
+        example.com
+    #>
+
+    Get-SenderIdConfig | select -expandproperty BypassedSenderDomains
+}
+
+function Add-BypassedSender{
+    <#
+    .SYNOPSIS
+        Add domain names to the exclusion list
+    .DESCRIPTION
+        To add domains you need to append to the SenderIdConfig BypassedSenderDomains list.
+        This command is a wrapper for that. This is because Set-SenderIdConfig with only the new domain, will replace the list.
+    .NOTES
+        In essence this wraps the oneliner:
+        Set-SenderIdConfig -BypassedSenderDomains ( (Get-SenderIdConfig).BypassedSenderDomains += "example.com" )
+    .EXAMPLE
+        Add-BypassedSender example.com
+        Returns no output for success.
+    .EXAMPLE
+        Add-BypassedSender '@test.com'
+        Cannot validate argument on parameter 'Domain'. Add sender domain not email address.
+    #>
+    Param(
+        [Parameter(Mandatory,
+                   Position=0,
+                   ValueFromPipeline)]
+        [ValidateScript({
+            if($psitem -match '@'){
+                Throw 'Add sender domain not email address.'
+            }
+            return $true
+        })]
+        [string[]]
+        $Domain
+    )
+    Set-SenderIDConfig -BypassedSenderDomains ($domain + (Get-BypassedSender))
+}
+
+function Remove-BypassedSender{
+    <#
+    .SYNOPSIS
+        Remove a signle domain from the list.
+    .EXAMPLE
+        Remove-BypassedSender example.com
+        No output for sucessful removal.
+    .EXAMPLE
+        Remove-BypassedSender potato
+        Did not find domain(potato) to remove in list: ...,
+    .EXAMPLE
+        Get-BypassedSender | where {$_ -like '*.net'} | foreach { Remove-BypassedSender $_ }
+        Remove domain that match this pattern.
+    #>
+    Param(
+        [Parameter(Mandatory,
+                   Position=0,
+                   ValueFromPipeline)]
+        [string]
+        $Domain
+    )
+    begin{
+        [System.Collections.ArrayList]$senders = Get-BypassedSender
+        $before = $senders.count
+    }
+    Process{
+        $senders.remove($Domain)
+        if($before -gt $senders.count){
+            Set-SenderIDConfig -BypassedSenderDomains $senders
+        } else {
+            Throw "Did not find domain($Domain) to remove in list: $($senders -join ', ')"
         }
     }
 }
@@ -398,4 +480,4 @@ function New-SharedMailbox {
     }
 }
 
-Export-ModuleMember -Function "Get-*", "Search-*", "New-*", "*-MailServer"
+Export-ModuleMember -Function "Get-*", "Search-*", "New-*", "Add-*", "Remove-*"

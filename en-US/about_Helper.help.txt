@@ -7,6 +7,13 @@ SHORT DESCRIPTION
 LONG DESCRIPTION
     Functions to make common tasks easier or as a reference/shortcut to more unusual tasks done rarely.
 
+    # Mail
+    Exchange server workflow issues are addressed with cmdlets in the mail.psm1 submodule.
+
+    ## Inspect failing email recipt
+    1. Use Get-RecentFailedMessages to view the exhange logs. Try -FormatView for easy information
+    2. Use Add-BypassedSenders if the Senders SPF record incorrectly references their mailservers IP.
+
 KEYWORDS
     School, Helpers, Search Mail Server, file permission, monitor hardware
 
