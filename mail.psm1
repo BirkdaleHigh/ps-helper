@@ -480,4 +480,11 @@ function New-SharedMailbox {
     }
 }
 
-Export-ModuleMember -Function "Get-*", "Search-*", "New-*", "Add-*", "Remove-*"
+Export-ModuleMember -Function @(
+    "Add-*",
+    "Import-*"
+    "New-*",
+    "Remove-*",
+    "Search-*",
+    "Get-*"
+)
