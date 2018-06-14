@@ -86,9 +86,21 @@ function Add-Access {
     .DESCRIPTION
         Add the NTFS Allow ACL for a given item for students access.
         Any deny rule will supercede this. See Enable-Access.
+    .PARAMETER Inherit
+        Choose to edit a folder ACL or all files within the folder
+
+        Set the "Applies to" contition for child items when All files
+
     .EXAMPLE
         Add-Access .\en-US\
-        By default allow students to read permission to the folder
+        By default allow students to read permission to the folder, subfolder and files.
+    .EXAMPLE
+        Add-Access .\en-US\ -Inherit ThisFolder
+        Allow students to read permission to this folder folder only.
+
+        Useful to only allow the account to check further permission,
+        this way you can add-access to files below this tree and access-based-enumeration will
+        hide them from the user.
     .EXAMPLE
         Add-Access .\en-US\ -Identity '2016 Students'
         Specify the Active Directory identiy name to set access for;
@@ -114,13 +126,13 @@ function Add-Access {
         , # AD identity to grant access
         [Parameter(ValueFromPipelineByPropertyName,
                    Position = 1)]
-        [string]
+        [string[]]
         $Identity = 'AllStudents'
         , # keyword access permission levels
         [ValidateSet('FullControl','Modify','ReadAndExecute')]
         [string]
         $Access = 'ReadAndExecute'
-        , # Sets the Applies to contition for child items
+        , #
         [ValidateSet('All','ThisFolder')]
         [string]
         $Inherit
@@ -130,15 +142,23 @@ function Add-Access {
             'ThisFolder' { $Inherritance = @('None') }
             Default { $Inherritance = @('ContainerInherit', 'ObjectInherit') }
         }
-        $FolderRule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $Identity, $Access, $Inherritance, 'None', 'Allow'
-        $FileRule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $Identity, $Access, 'Allow'
+        $FolderRule = New-Object System.Collections.ArrayList
+        $FileRule = New-Object System.Collections.ArrayList
+        foreach($id in $Identity){
+            $FolderRule.Add( (New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $id, $Access, $Inherritance, 'None', 'Allow') ) > $null
+            $FileRule.Add( (New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $id, $Access, 'Allow') ) > $null
+        }
     }
     Process {
         $Path | Get-Acl | foreach-object {
             if ( (Get-Item $Path) -is [System.IO.DirectoryInfo] ){
-                $psitem.SetAccessRule($FolderRule)
+                foreach($rule in $FolderRule){
+                    $psitem.SetAccessRule($rule)
+                }
             } else {
-                $psitem.SetAccessRule($FileRule)
+                foreach($rule in $FileRule){
+                    $psitem.SetAccessRule($rule)
+                }
             }
             try { $psitem | Set-acl }
             catch {
