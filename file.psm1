@@ -151,20 +151,24 @@ function Add-Access {
     }
     Process {
         $Path | Get-Acl | foreach-object {
-            if ( (Get-Item $Path) -is [System.IO.DirectoryInfo] ){
-                foreach($rule in $FolderRule){
-                    $psitem.SetAccessRule($rule)
+            $acl = $PSItem
+            $item = Get-Item $PSItem.path
+            try {
+                if ( $item -is [System.IO.DirectoryInfo] ){
+                    foreach($rule in $FolderRule){
+                        $acl.SetAccessRule($rule)
+                    }
+                } else {
+                    foreach($rule in $FileRule){
+                        $acl.SetAccessRule($rule)
+                    }
                 }
-            } else {
-                foreach($rule in $FileRule){
-                    $psitem.SetAccessRule($rule)
-                }
+                $acl | Set-acl
             }
-            try { $psitem | Set-acl }
             catch {
-                Throw "Failed to add permission: $($psitem.path)"
+                Throw "Failed to add permission: $($acl.path)"
             }
-            Get-Item $psitem.Path | Write-Output
+            Write-Output $item
         }
     }
 }
