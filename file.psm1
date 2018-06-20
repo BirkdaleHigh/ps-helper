@@ -302,7 +302,7 @@ Register-ArgumentCompleter -CommandName 'Add-Access','Remove-Access','Enable-Acc
 
     [int]$year = (get-date).year
     for( $i = $year; $i -ge ($year -6); $i -= 1){
-        "'$i Students'"
+        $preset.add("'$i Students'") > $null
     }
 
     $preset |
