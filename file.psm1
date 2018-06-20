@@ -306,8 +306,11 @@ Register-ArgumentCompleter -CommandName 'Add-Access','Remove-Access','Enable-Acc
     }
 
     $preset |
+        Where-Object {
+            $psitem -match $wordToComplete
+        } |
         ForEach-Object {
-            [System.Management.Automation.CompletionResult]::new($psitem, $psitem, 'ParameterValue', ("AD Name: " + $psitem))
+            Write-Output [System.Management.Automation.CompletionResult]::new($psitem, $psitem, 'ParameterValue', ("AD Name: " + $psitem))
         }
 }
 
