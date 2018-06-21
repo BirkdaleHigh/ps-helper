@@ -183,7 +183,7 @@ function Remove-Access {
         PS C:\> \\<server\<share>\<Path> | Remove-StudentAccess | Convertto-html | Out-File "Report.html"
         Generate a report that lists the items students have been blocked from using.
     #>
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess=$true)]
     Param(
         [Parameter(ValueFromPipeline,ValueFromPipelineByPropertyName,
                    Position = 0)]
@@ -199,9 +199,15 @@ function Remove-Access {
     }
     Process {
         $Path | Get-Acl | foreach-object {
-            $Rule = $psitem.Access | Where-Object { ($_.IdentityReference -like "*$Identity") -and ($_.AccessControlType -eq  'Allow')}
+            $Rule = $psitem.Access | Where-Object { ($_.IdentityReference -like "*$Identity") -and ($_.AccessControlType -eq  'Allow') -and ($_.IsInherited -eq $false)}
             $psitem.RemoveAccessRule($Rule) > $null
-            try { $psitem | Set-acl }
+            try {
+                if($PSCmdlet.ShouldProcess($psitem.path, "Remove ACL: $($Rule.IdentityReference)")){
+                    $psitem | Set-acl
+                } else {
+                    return
+                }
+            }
             catch {
                 Throw "Failed to remove permission: $($psitem.path)"
             }
