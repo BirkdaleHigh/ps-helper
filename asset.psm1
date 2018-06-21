@@ -23,10 +23,10 @@ function Get-MonitorInformation {
         $ComputerName = 'localhost'
     )
     Process{
-        Get-WmiObject -Class wmiMonitorID -Namespace "root\wmi" -ComputerName $ComputerName |
+        Get-CimInstance -Class wmiMonitorID -Namespace "root\wmi" -ComputerName $ComputerName |
             Select-Object @{
                 name = 'ComputerName'
-                expression = { $psitem.__SERVER }
+                expression = { $psitem.PSComputerName }
             },
             @{  name = 'Name'
                 expression = { [System.Text.Encoding]::ASCII.GetString($psitem.ManufacturerName) }
