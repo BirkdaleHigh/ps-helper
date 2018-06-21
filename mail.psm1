@@ -279,7 +279,7 @@ function Get-BypassedSender{
         example.com
     #>
 
-    Get-SenderIdConfig | select -expandproperty BypassedSenderDomains
+    Get-SenderIdConfig | Select-Object -expandproperty BypassedSenderDomains
 }
 
 function Add-BypassedSender{
