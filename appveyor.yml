@@ -1,5 +1,4 @@
 # See http://www.appveyor.com/docs/appveyor-yml for many more options
-
 environment:
   gallery:
     secure: p48jnOjtyEeyHlIOWwS64Mrnjiq2f3YUDpBDE7woUNCV+z5JVzqB0DhEtCCTQagZ
@@ -9,6 +8,19 @@ os: WMF 5
 
 build: false
 
+init:
+  - git config --global core.autocrlf true
+
+# Setup the build dependency for powershell
+install:
+  - ps: Write-Host "Setup Build Tool Dependency"
+  - ps: Write-Host "PowerShell Version:" $PSVersionTable.PSVersion.tostring()
+  - ps: |
+      $null = Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
+      Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+      Install-Module InvokeBuild
+      Set-Location $env:APPVEYOR_BUILD_FOLDER\
+
 #Kick off the CI/CD pipeline
 test_script:
-- ps: . .\Helper.Build.ps1
+  - ps: Invoke-Build
