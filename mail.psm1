@@ -132,7 +132,14 @@ function Remove-MailServer {
     .EXAMPLE
         Remove-MailServer
     #>
-    Remove-PSSession $script:session
+    [CmdletBinding(SupportsShouldProcess=$true)]
+    Param(
+        [System.Management.Automation.Runspaces.PSSession]
+        $session = $script:session
+    )
+    if($PSCmdlet.ShouldProcess($session.ComputerName, "Remove $($session.state) session")){
+        Remove-PSSession $session
+    }
 }
 
 function Get-RecentFailedMessage {
