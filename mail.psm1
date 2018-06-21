@@ -329,6 +329,7 @@ function Remove-BypassedSender{
         Get-BypassedSender | where {$_ -like '*.net'} | foreach { Remove-BypassedSender $_ }
         Remove domain that match this pattern.
     #>
+    [CmdletBinding(SupportsShouldProcess=$true)]
     Param(
         [Parameter(Mandatory,
                    Position=0,
@@ -343,7 +344,9 @@ function Remove-BypassedSender{
     Process{
         $senders.remove($Domain)
         if($before -gt $senders.count){
-            Set-SenderIDConfig -BypassedSenderDomains $senders
+            if($PSCmdlet.ShouldProcess("Bypassed Senders list", "New List: $senders")){
+                Set-SenderIDConfig -BypassedSenderDomains $senders
+            }
         } else {
             Throw "Did not find domain($Domain) to remove in list: $($senders -join ', ')"
         }
