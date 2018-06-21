@@ -292,6 +292,33 @@ function Show-Access {
     }
 }
 
+function Move-Work {
+    [cmdletBinding(SupportsShouldProcess)]
+    Param(
+        [String]
+        $Path
+
+        , [string]
+        $Destination
+
+        , [string]
+        $Filter = '*.docx'
+    )
+    $source = Get-ChildItem -Filter $Filter -Path $Path
+    if($PSCmdlet.ShouldProcess( $Destination, "Create New Directory" )){
+        New-Item -type Directory -Path $Destination
+    }
+    if($PSCmdlet.ShouldProcess( $source.length, "Move files to $Destination" )){
+        $source | Move-Item -Destination $Destination -OutVariable target
+    }
+
+    Write-Output [PSCustomObject]@{
+        Source = $source
+        Target = $target
+        Count  = $source.length
+    }
+}
+
 Register-ArgumentCompleter -CommandName 'Add-Access','Remove-Access','Enable-Access','Disable-Access' -ParameterName 'Identity' -ScriptBlock {
     param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameter)
     [System.Collections.ArrayList]$preset = @(
