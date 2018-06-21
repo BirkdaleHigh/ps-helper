@@ -426,7 +426,7 @@ function New-SharedMailbox {
         The ability to Set-MailboxSentItemsConfiguration requires "Enterprise Administrators" group membership with the credentials used for import-mailserver.
         Creating the mailbox and assigning permissions requires only "Organization Management" membership.
     #>
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess=$true)]
     Param(
         # Will show as the name for the contact and mailbox
         [Parameter(Mandatory)]
@@ -465,6 +465,9 @@ function New-SharedMailbox {
     Begin{
     }
     Process{
+        if(-not ($PSCmdlet.ShouldProcess($alias, "Create new shared mailbox"))){
+            return
+        }
         New-MailBox -Name $Name -DisplayName $DisplayName -Alias $alias -OrganizationalUnit $OrganizationalUnit -Database $Database -UserPrincipalName "$Alias@bhs.internal" -Shared
         $mailbox = Get-Mailbox -Identity $Name
         # By default sent items will only show in the senders account. This forces them into the shared sent items folder.
