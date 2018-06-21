@@ -96,9 +96,9 @@ function Import-MailServer {
         $Scope = 'Global'
     )
     $test = Test-Connection $ComputerName -count 1 -ErrorAction Stop
-    $host = [System.Net.Dns]::GetHostbyAddress($test.ProtocolAddress).HostName
+    $HostName = [System.Net.Dns]::GetHostbyAddress($test.ProtocolAddress).HostName
 
-    $script:session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri "http://$host/PowerShell/" -Authentication Kerberos -Credential:$Credential
+    $script:session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri "http://$HostName/PowerShell/" -Authentication Kerberos -Credential:$Credential
     if($Scope -eq 'Global'){
         Import-module (Import-PSSession $script:session) -Global
     } else {
