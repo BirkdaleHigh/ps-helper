@@ -295,6 +295,7 @@ function Show-Access {
 function Move-Work {
     [cmdletBinding(SupportsShouldProcess)]
     Param(
+        [Parameter(ValueFromPipeline,ValueFromPipelineByPropertyName)]
         [String]
         $Path
 
@@ -304,19 +305,23 @@ function Move-Work {
         , [string]
         $Filter = '*.docx'
     )
-    $source = Get-ChildItem -Filter $Filter -Path $Path
+    if(-not $Path){
+        $source = Get-ChildItem -Recurse -Filter $Filter -Path $Path
+    } else {
+        $source = Get-ChildItem -Filter $Filter -Path $Path
+    }
     if($PSCmdlet.ShouldProcess( $Destination, "Create New Directory" )){
-        New-Item -type Directory -Path $Destination
+        New-Item -type Directory -Path $Destination -ErrorAction SilentlyContinue > $null
     }
     if($PSCmdlet.ShouldProcess( $source.length, "Move files to $Destination" )){
-        $source | Move-Item -Destination $Destination -OutVariable target
+        $source | Move-Item -Destination $Destination -PassThru -OutVariable target
     }
 
-    Write-Output [PSCustomObject]@{
+    Write-Output ([PSCustomObject]@{
         Source = $source
         Target = $target
         Count  = $source.length
-    }
+    })
 }
 
 Register-ArgumentCompleter -CommandName 'Add-Access','Remove-Access','Enable-Access','Disable-Access' -ParameterName 'Identity' -ScriptBlock {
