@@ -297,19 +297,23 @@ function Move-Work {
     Param(
         [Parameter(ValueFromPipeline,ValueFromPipelineByPropertyName)]
         [String]
-        $Path
+        $Path = '.'
 
-        , [string]
+        ,
+        [Parameter(Mandatory)]
+        [string]
         $Destination
 
-        , [string]
+        ,
+        [string]
         $Filter = '*.docx'
+
+        ,
+        [switch]
+        $Recurse
     )
-    if(-not $Path){
-        $source = Get-ChildItem -Recurse -Filter $Filter -Path $Path
-    } else {
-        $source = Get-ChildItem -Filter $Filter -Path $Path
-    }
+    $source = Get-ChildItem -Recurse:$Recurse -Filter $Filter -Path $Path
+
     if($PSCmdlet.ShouldProcess( $Destination, "Create New Directory" )){
         New-Item -type Directory -Path $Destination -ErrorAction SilentlyContinue > $null
     }
