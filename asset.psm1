@@ -22,21 +22,83 @@ function Get-MonitorInformation {
         [string[]]
         $ComputerName = 'localhost'
     )
-    Process{
+    Process {
         Get-CimInstance -Class wmiMonitorID -Namespace "root\wmi" -ComputerName $ComputerName |
             Select-Object @{
-                name = 'ComputerName'
-                expression = { $psitem.PSComputerName }
-            },
-            @{  name = 'Name'
-                expression = { [System.Text.Encoding]::ASCII.GetString($psitem.ManufacturerName) }
-            },
-            @{  name = 'Serial'
-                expression = { [System.Text.Encoding]::ASCII.GetString($psitem.SerialNumberID) }
-            },
-            YearOfManufacture
+            name       = 'ComputerName'
+            expression = { $psitem.PSComputerName }
+        },
+        @{  name       = 'Name'
+            expression = { [System.Text.Encoding]::ASCII.GetString($psitem.ManufacturerName) }
+        },
+        @{  name       = 'Serial'
+            expression = { [System.Text.Encoding]::ASCII.GetString($psitem.SerialNumberID) }
+        },
+        YearOfManufacture
 
     }
 }
 
-Export-ModuleMember -Function "Get-MonitorInformation"
+function Get-Memory {
+    [CmdletBinding()]
+    [OutputType([psobject])]
+    Param
+    (
+        # Target computer names
+        [Parameter(ValueFromPipelineByPropertyName = $true,
+            Position = 0)]
+        $ComputerName = 'localhost'
+    )
+
+    Begin {
+        # Inconsistent notation to increase readability.
+        $ListOfMemory = @{
+            20 = "DDR"
+            21 = "DDR 2"
+            24 = "DDR 3" # Windows 10
+            0  = "DDR 3" # Windows 7
+        }
+
+        $Speed = @{
+            Name       = "Speed (MHz)"
+            Expression = {
+                $_.Speed
+            }
+        }
+        $Capacity = @{
+            Name       = "Capacity (MB)"
+            Expression = {
+                [Math]::Round( $_.Capacity / 1mb , 0)
+            }
+        }
+        $SourceComputer = @{
+            Name       = "ComputerName"
+            Expression = {
+                $_.__SERVER
+            }
+        }
+        $MemoryType = @{
+            Name       = "Memory Type"
+            Expression = {
+                $ListOfMemory.Item([int]$_.MemoryType)
+            }
+        }
+
+    }
+    Process {
+        Get-CimInstance -ClassName win32_PhysicalMemory -ComputerName $ComputerName |
+            select-Object @(
+                $SourceComputer
+                Manufacturer
+                PartNumber
+                $Speed
+                $Capacity
+                DeviceLocator
+                $MemoryType
+            ) |
+            where-Object { $_.DeviceLocator -notmatch "SYSTEM ROM" } |
+            Write-Output
+    }
+}
+
+Export-ModuleMember -Function "Get-MonitorInformation", "Get-Memory"

@@ -17,7 +17,7 @@ function Search-MailFrom {
     Search-Mailbox -identity $Identity -SearchQuery "received:$($Start.toString('yyyy-MM-dd'))..$($End.toString('yyyy-MM-dd')) AND from:`"$from`"" -TargetMailBox $ResultTarget -TargetFolder "Search" -DeleteContent:$Delete -Force:$Delete
 }
 
-function Search-MailTo {
+function Search-MailPaticipant {
     <#
     .SYNOPSIS
         Search a mailbox by "from address"
@@ -27,13 +27,13 @@ function Search-MailTo {
     Param(
         [string]$Identity
         , # Cannot start with a wildcard, only end with *
-        [string]$To
+        [string]$address
         , [datetime]$Start = (Get-date).Date
         , [datetime]$End = $Start.addDays(1).Date
         , [switch]$Delete
         , [string]$ResultTarget = $env:username
     )
-    Search-Mailbox -identity $Identity -SearchQuery "received:$($Start.toString('yyyy-MM-dd'))..$($End.toString('yyyy-MM-dd')) AND to:`"$To`"" -TargetMailBox $ResultTarget -TargetFolder "Search" -DeleteContent:$Delete -Force:$Delete
+    Search-Mailbox -identity $Identity -SearchQuery "received:$($Start.toString('yyyy-MM-dd'))..$($End.toString('yyyy-MM-dd')) AND participants:`"$address`"" -TargetMailBox $ResultTarget -TargetFolder "Search" -DeleteContent:$Delete -Force:$Delete
 }
 
 function Search-MailSubject {
