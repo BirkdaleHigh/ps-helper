@@ -12,7 +12,7 @@
 RootModule = 'Helper.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.4.0'
+ModuleVersion = '1.4.2'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -21,13 +21,13 @@ ModuleVersion = '1.4.0'
 GUID = 'ddb5316f-0dda-4927-af11-aa64e37e944c'
 
 # Author of this module
-Author = 'Jack Bennett <github@jackben.net>'
+Author = 'Jack Bennett <code@jackben.net>'
 
 # Company or vendor of this module
 CompanyName = 'Birkdale High'
 
 # Copyright statement for this module
-Copyright = '(c) 2017 Jack Bennett. All rights reserved.'
+Copyright = '(c) 2019 Jack Bennett. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'Tasks done often or rarely can be useful to wrap up quirky or verbose commands into short custom functions that are easy to remember.'
@@ -83,6 +83,7 @@ FunctionsToExport = @(
     "Get-LocalLogonProfile"
     "Import-MailServer"
     "Move-Work"
+    "New-ComputerList"
     "New-SharedMailbox"
     "Remove-Access"
     "Remove-BypassedSender"
