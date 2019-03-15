@@ -34,7 +34,7 @@ function Get-MonitorInformation {
         @{  name       = 'Serial'
             expression = { [System.Text.Encoding]::ASCII.GetString($psitem.SerialNumberID) }
         },
-        YearOfManufacture
+        'YearOfManufacture'
 
     }
 }
@@ -86,14 +86,14 @@ function Get-Memory {
 
     }
     Process {
-        Get-CimInstance -ClassName win32_PhysicalMemory -ComputerName $ComputerName |
+        Get-CimInstance -ClassName 'win32_PhysicalMemory' -ComputerName $ComputerName |
             select-Object @(
                 $SourceComputer
-                Manufacturer
-                PartNumber
+                'Manufacturer'
+                'PartNumber'
                 $Speed
                 $Capacity
-                DeviceLocator
+                'DeviceLocator'
                 $MemoryType
             ) |
             where-Object { $_.DeviceLocator -notmatch "SYSTEM ROM" } |
