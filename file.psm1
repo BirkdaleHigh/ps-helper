@@ -129,8 +129,7 @@ function Add-Access {
         [string[]]
         $Identity = 'AllStudents'
         , # keyword access permission levels
-        [ValidateSet('FullControl','Modify','ReadAndExecute')]
-        [string]
+        [System.Security.AccessControl.FileSystemRights]
         $Access = 'ReadAndExecute'
         , #
         [ValidateSet('All','ThisFolder')]
@@ -144,6 +143,9 @@ function Add-Access {
         }
         $FolderRule = New-Object System.Collections.ArrayList
         $FileRule = New-Object System.Collections.ArrayList
+        if($Access -eq 'Write'){
+            $Access = 'Write', 'ReadAndExecute'
+        }
         foreach($id in $Identity){
             $FolderRule.Add( (New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $id, $Access, $Inherritance, 'None', 'Allow') ) > $null
             $FileRule.Add( (New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $id, $Access, 'Allow') ) > $null
