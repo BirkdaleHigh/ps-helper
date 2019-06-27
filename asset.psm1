@@ -55,8 +55,9 @@ function Get-Memory {
         $ListOfMemory = @{
             20 = "DDR"
             21 = "DDR 2"
-            24 = "DDR 3" # Windows 10
-            0  = "DDR 3" # Windows 7
+            24 = "DDR 3"
+            26 = "DDR 4"
+            0  = "Unknown"
         }
 
         $Speed = @{
@@ -80,7 +81,7 @@ function Get-Memory {
         $MemoryType = @{
             Name       = "Memory Type"
             Expression = {
-                $ListOfMemory.Item([int]$_.MemoryType)
+                $ListOfMemory.Item([int]$_.SMBIOSMemoryType)
             }
         }
 
