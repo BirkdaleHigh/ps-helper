@@ -74,7 +74,7 @@ function Get-Memory {
         $SourceComputer = @{
             Name       = "ComputerName"
             Expression = {
-                $_.__SERVER
+                $_.PSComputerName
             }
         }
         $MemoryType = @{
