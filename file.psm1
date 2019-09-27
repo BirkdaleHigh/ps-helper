@@ -134,7 +134,7 @@ function Add-Access {
         , #
         [ValidateSet('All','ThisFolder')]
         [string]
-        $Inherit
+        $Inherit = 'All'
     )
     Begin {
         switch ($inherit) {
