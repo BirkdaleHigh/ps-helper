@@ -110,81 +110,58 @@ function New-ComputerList {
     Param
     (
         # Room number
-        [Parameter(Mandatory = $true,
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName = $true,
-            Position = 0)]
+        [Parameter(Mandatory,
+                   ValueFromPipeline,
+                   ValueFromPipelineByPropertyName,
+                   Position = 0)]
         [string[]]
         $Room
 
         , # Start PC number, default is 1. leading zero is unnecessary
         [Parameter(Position = 1,
-            ValueFromPipeline = $true)]
-        [int[]]
+                   ValueFromPipeline,
+                   ValueFromPipelineByPropertyName)]
+        [uint16[]]
         $Computer = 1
 
         , # Exclude specific numbers
-        [Parameter(Position = 2)]
-        [int[]]
+        [Parameter(Position = 2,
+                   ValueFromPipelineByPropertyName)]
+        [uint16[]]
         $Exclude
 
-        , # Use a Fully Qualified Domain name
-        [Parameter(ParameterSetName = 'Default')]
-        [switch]
-        $FQDN
-
-        , # Use a UNC path
-        [Parameter(ParameterSetName = 'File Path')]
-        [switch]
-        $UNC
-
         , # Drive letter in UNC path
-        [Parameter(ParameterSetName = 'File Path',
-            Position = 2)]
+        [Parameter(Position = 3,
+                   ValueFromPipelineByPropertyName)]
         [ValidateSet('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z')]
         [string]
         $Drive = 'c'
     )
 
     Begin {
-        #What's the fully qualified domain name in case we need it
+        # The local fully qualified domain name
         $domain = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain().name
     }
 
     Process {
-        # We need to build the string ROOM-COMPUTER
-
         # So for each room we've been given
-        foreach ($r in $room) {
-            Write-Verbose "Making list for Room: $r"
+        $room.forEach({
+            $room = $psitem
+            Write-Verbose "Making list for Room: $room"
 
-            # Make a computer for each of the computers specified
-            foreach ($c in $computer) {
-                # Skip computer numbers in the exclude list
-                if ($c -in $Exclude) {
-                    continue
-                }
-
-                Write-Verbose "adding computer: $c to the room list"
+            # Make a computer for each of the computers specified, ignoring "Exclude" list
+            $computer.where({$psitem -notin $Exclude}).foreach({
+                Write-Verbose "adding computer: $psitem to the room list"
                 # Add this string to our list of computernames with a fully qualified domain name
-                $computerName = "$r`PC$( $c.toString('00') )"
+                $computerName = "$room`PC$( $psitem.toString('00') )"
 
-                $value = New-Object -TypeName PSCustomObject
-                $value | add-member -MemberType NoteProperty -name 'ComputerName' -value $computerName
-
-                if ($FQDN) {
-                    Write-Verbose ('Adding FQDN [' + $domain + '] to ' + $computerName + ' computer')
-                    $value | add-member -MemberType NoteProperty -name 'ComputerName' -value "$computerName.$domain" -Force
+                [psCustomObject]@{
+                    "ComputerName" = $computerName
+                    "FQDN" = "$computerName.$domain"
+                    "Path" = "\\$computerName\$Drive$\"
                 }
-
-                if ($UNC) {
-                    Write-Verbose ('Adding Path \\' + $computerName + ' of drive ' + $Drive)
-                    $value | add-member -MemberType NoteProperty -name 'Path'-value "\\$computerName\$Drive$\"
-                }
-
-                $value
-            }
-        }
+            })
+        })
     }
 }
 
